@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">FacebookAuth</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="key_hash">ga0RGNYHvNM5d0SLGQfpQWAPGJ8=</string>
+    <string name="key_id">382195418632668</string>
+    <string name="get_content">Get Profile</string>
+</resources>
