@@ -17,11 +17,15 @@ import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.facebook.Profile;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import javax.security.auth.callback.Callback;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -56,7 +60,7 @@ public class MainActivityFragment extends Fragment {
 
     private void displayProfileName() {
         Profile profile = Profile.getCurrentProfile();
-        if (profile != null){
+        if (profile != null) {
             display.setText(profile.getName());
         }
     }
@@ -76,11 +80,12 @@ public class MainActivityFragment extends Fragment {
     public MainActivityFragment() {
 
     }
+
     LoginButton loginBtn;
 
 
     @Override
-    public void onCreate( Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getActivity().getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
@@ -100,33 +105,61 @@ public class MainActivityFragment extends Fragment {
         display = (TextView) view.findViewById(R.id.textView);
         getBtn = (Button) view.findViewById(R.id.get_content);
         loginBtn.setFragment(this);
-        loginBtn.setReadPermissions("public_profile", "user_friends");
+        loginBtn.setReadPermissions("public_profile","user_posts", "read_stream", "user_posts");
         loginBtn.registerCallback(callbackManager, callback);
         getBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                GraphRequest request = GraphRequest.newMeRequest(
-                        AccessToken.getCurrentAccessToken(),
-                        new GraphRequest.GraphJSONObjectCallback() {
-                            @Override
-                            public void onCompleted(
-                                    JSONObject object,
-                                    GraphResponse response) {
-                                Log.e("check this out", object.toString()+" "+response.toString().substring(0,10));
-                            }
-                        });
-                request.executeAsync();
+                //getUserProfile();
+                getUserPosts();
             }
         });
 
 
     }
 
+    private void getUserPosts() {
+        Log.e("in post", AccessToken.getCurrentAccessToken().getToken());
+        GraphRequest request = new GraphRequest(AccessToken.getCurrentAccessToken(),
+                "me", null, HttpMethod.GET,
+                new GraphRequest.Callback() {
+            @Override
+            public void onCompleted(GraphResponse graphResponse) {
+                Log.e("in post", graphResponse.toString());
+            }
+        });
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "posts.since=(1400889600)");
+        parameters.putString("fields", "posts.until=(1400975999)");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
+    private void getUserProfile() {
+        GraphRequest request = GraphRequest.newMeRequest(
+                AccessToken.getCurrentAccessToken(),
+                new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(
+                            JSONObject object,
+                            GraphResponse response) {
+                        try {
+                            String location = object.getJSONObject("location").optString("name");
+                            Log.e("check it", location);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+        request.executeAsync();
+    }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        callbackManager.onActivityResult(requestCode,resultCode, data);
+        callbackManager.onActivityResult(requestCode, resultCode, data);
 
     }
 }
